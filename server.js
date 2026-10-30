@@ -132,7 +132,7 @@ function buildEmbed(data) {
             `### [${data.trackName}](${data.trackUrl})\n` +
             `**[${data.artistName}](https://last.fm/music/${encodeURIComponent(data.artistName)})** · *[${data.albumName}](https://last.fm/music/${encodeURIComponent(data.artistName)}/${encodeURIComponent(data.albumName)})*\n\n` +
             `${statsLine}`
-             + `${dataForStreams?.streams?.toLocaleString() || "n/a"} total streams \n ${dataForStreams.daily?.toLocaleString() || "n/a"} daily streams`
+             + `${data.dataForStreams?.streams?.toLocaleString() || "n/a"} total streams \n ${data.dataForStreams?.daily?.toLocaleString() || "n/a"} daily streams`
         )
         .setThumbnail(imageUrl);
 }

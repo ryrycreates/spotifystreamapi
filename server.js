@@ -211,7 +211,7 @@ app.get("/api/v1/playlist/:id", (req, res) => {
 app.get("/api/v1/track/:id", (req, res) => {
     const { id } = req.params;
     return res.json({
-        data: getTrack(id, id, "")
+        data: getTrack([id, id, ""])
     })
 });
 

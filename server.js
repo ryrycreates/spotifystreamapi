@@ -98,6 +98,8 @@ client.on('messageCreate', async (message) => {
             let imageOverride = (!getAlbumOverride || getAlbumOverride?.length == 0) ? lastPlayed.defaultCover : getAlbumOverride.custom_cover_url;
 
             let streamData = await getTrack([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()]);
+            console.log([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()])
+            console.log(streamData)
             let fullData = null;
             if (streamData.length > 0) {
                 fullData = streamData[0];

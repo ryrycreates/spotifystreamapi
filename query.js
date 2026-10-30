@@ -69,7 +69,7 @@ export const TRANSACTION_QUERY = async (queries) => {
 }
 
 export const INSERT_PLAYLIST = async (vals) => {
-    await client.query(`INSERT INTO playlists (id, playlist_id, status) VALUES($1, $2, $3)`, vals);
+    await client.query(`INSERT INTO playlists (id, private) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET private = excluded.private`, vals);
 }
 
 export const INSERT_PLAYLIST_TRACK = async (vals) => {

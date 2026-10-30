@@ -1,5 +1,6 @@
 //Use tokens fetched from global token pipeline in order to faciliate spotify queries
 import { extractId, getDate, getRandomTimeout } from "./helpers.js";
+import { INSERT_PLAYLIST } from "./query.js";
 
 //Global spotify query
 async function globalSpotifyQuery(body) {
@@ -72,7 +73,7 @@ export async function fetchPlaylist(playlistId) {
 
     let hasMore = true;
     let offset = 0;
-    let increment = 100;
+    let increment = 200;
     let trackData = [];
 
     while (hasMore) {
@@ -95,7 +96,7 @@ export async function fetchPlaylist(playlistId) {
 
         //mark playlist as unavailable
         if (data.data.playlistV2.__typename === "NotFound") {
-            insertPlaylist(playlistId, 1);
+            await INSERT_PLAYLIST(playlistId, 1);
             throw new Error("ERROR_PLAYLIST_DOES_NOT_EXIST_OR_IS_NOT_PUBLIC");
         }
 

@@ -2,11 +2,11 @@ import express from "express";
 
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 import pkg from 'discord.js';
 import { np } from './last.js';
-import { GET_USER, GET_USER_COVER, getPlaylist, getTrack, INSERT_USER, INSERT_USER_COVER } from './query.js';
+import { GET_USER, GET_USER_COVER, getPlaylist, getTrack, INSERT_PLAYLIST, INSERT_USER, INSERT_USER_COVER } from './query.js';
 import { cronJob } from "./jobs.js";
 const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = pkg;
 
@@ -30,51 +30,24 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot || !message.content.startsWith(PREFIX)) return;
 
     if (message.content.startsWith(".au")) {
+        let mentions = Array.from(message.mentions.users);
+        let alt_user = mentions?.[0] || null;
+
         let fm = message.content.split("fm:");
         let extract = fm?.[1]?.split(" ");
         let last_fm_new_user = extract?.[0];
-        if(!last_fm_new_user) return message.reply("No lastfm username provided.");
-        await INSERT_USER([message.author.id, last_fm_new_user, 0]);
+        if (!last_fm_new_user) return message.reply("No lastfm username provided.");
+        await INSERT_USER([alt_user ? alt_user.id : message.author.id, last_fm_new_user, 0]);
         return message.reply("Added to database under last.fm username: " + last_fm_new_user);
     }
 
     if (message.content.startsWith(".chc")) {
 
-        if (message.attachments.size == 0) return message.channel.send(`No image provided.`);
-
-        const user = await GET_USER(message.author.id);
-        const lastPlayed = await np(user.last_fm_username);
-        let albumIdentifier = lastPlayed.albumId ? lastPlayed.albumId : lastPlayed.albumName + lastPlayed.artistName;
-
-        let fm = message.content.split("v:");
-       let extract = fm?.[1]?.split(" ");
-        let new_v = parseInt(extract?.[0]);
-
-        if (!new_v || isNaN(new_v)) new_v = 1;
-
-        let mentions = Array.from(message.mentions.users);
-        mentions.push({
-            id: message.author.id
-        });
-
-        if ((mentions.length > 0)) {
-            const attachment = message.attachments.first();
-            const imageUrl = attachment.url;
-            for (let i = 0; i < mentions.length; i++) {
-                let current_user = mentions[i];
-                await INSERT_USER_COVER([current_user.id, new_v, 1, albumIdentifier, imageUrl])
-                return message.reply(`Added!`);
-            }
-        }
-
-    }
-
-    if (message.content.startsWith(".npp")) {
-
         try {
-            let user = await GET_USER(message.author.id);
-            console.log(user)
-            if(!user || user.length == 0) return message.reply("Could not find user");
+            if (message.attachments.size == 0) return message.channel.send(`No image provided.`);
+
+            const user = await GET_USER(message.author.id);
+            if (!user || user.length == 0) return message.reply("Could not find user");
             const lastPlayed = await np(user.last_fm_username);
             let albumIdentifier = lastPlayed.albumId ? lastPlayed.albumId : lastPlayed.albumName + lastPlayed.artistName;
 
@@ -85,14 +58,48 @@ client.on('messageCreate', async (message) => {
             if (!new_v || isNaN(new_v)) new_v = 1;
 
             let mentions = Array.from(message.mentions.users);
-            if (mentions.length > 0) user = {discord_id: mentions[0].id};
+            mentions.push({
+                id: message.author.id
+            });
+
+            if ((mentions.length > 0)) {
+                const attachment = message.attachments.first();
+                const imageUrl = attachment.url;
+                for (let i = 0; i < mentions.length; i++) {
+                    let current_user = mentions[i];
+                    await INSERT_USER_COVER([current_user.id, new_v, 1, albumIdentifier, imageUrl])
+                    return message.reply(`Added!`);
+                }
+            }
+        } catch (err) {
+            return message.reply(err.message)
+        }
+
+    }
+
+    if (message.content.startsWith(".npp")) {
+
+        try {
+            let user = await GET_USER(message.author.id);
+            if (!user || user.length == 0) return message.reply("Could not find user");
+            const lastPlayed = await np(user.last_fm_username);
+            let albumIdentifier = lastPlayed.albumId ? lastPlayed.albumId : lastPlayed.albumName + lastPlayed.artistName;
+
+            let fm = message.content.split("v:");
+            let extract = fm?.[1]?.split(" ");
+            let new_v = parseInt(extract?.[0]);
+
+            if (!new_v || isNaN(new_v)) new_v = 1;
+
+            let mentions = Array.from(message.mentions.users);
+            if (mentions.length > 0) user = { discord_id: mentions[0].id };
 
             let getAlbumOverride = await GET_USER_COVER([user.discord_id, new_v, albumIdentifier, lastPlayed.albumName + lastPlayed.artistName]);
             let imageOverride = (!getAlbumOverride || getAlbumOverride?.length == 0) ? lastPlayed.defaultCover : getAlbumOverride.custom_cover_url;
 
             let streamData = await getTrack([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()]);
             let fullData = null;
-            if(streamData.length > 0) {
+            if (streamData.length > 0) {
                 fullData = streamData[0];
             }
             //const trackPlays = await tempFetchTrackPlays(lastfm_username, lastPlayed.name, lastPlayed.artist["#text"]);
@@ -116,6 +123,20 @@ client.on('messageCreate', async (message) => {
         }
     }
 
+    if (message.content.startsWith(".app")) {
+        try {
+            let fm = message.content.split("playlist:");
+            let extract = fm?.[1]?.split(" ");
+            let new_v = extract?.[0];
+
+            await INSERT_PLAYLIST([new_v, 0]);
+            return message.reply("Added playlist. Stats will be available for it tommorow (or whenever ryry runs the fetch)");
+
+        } catch (err) {
+            return message.reply(err.message);
+        }
+    }
+
 });
 
 function buildEmbed(data) {
@@ -131,10 +152,15 @@ function buildEmbed(data) {
             `Now playing for **[${data.lastfm_username}](https://last.fm/user/${data.lastfm_username})**\n` +
             `### [${data.trackName}](${data.trackUrl})\n` +
             `**[${data.artistName}](https://last.fm/music/${encodeURIComponent(data.artistName)})** · *[${data.albumName}](https://last.fm/music/${encodeURIComponent(data.artistName)}/${encodeURIComponent(data.albumName)})*\n\n` +
-            `${statsLine}`
-             + `${data.dataForStreams?.streams?.toLocaleString() || "n/a"} total streams \n ${data.dataForStreams?.daily?.toLocaleString() || "n/a"} daily streams`
+            `${statsLine} \n`
+            + `**${formatStreams(data.dataForStreams?.streams)}** total streams \n **${formatStreams(data.dataForStreams?.daily)}** daily streams`
         )
         .setThumbnail(imageUrl);
+}
+
+function formatStreams(data) {
+    if(data) return data.toLocaleString();
+    return "-";
 }
 
 /*
@@ -176,14 +202,14 @@ app.post("/api/v1/start", (req, res) => {
 });
 
 app.get("/api/v1/playlist/:id", (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     return res.json({
         data: getPlaylist(id)
     })
 });
 
 app.get("/api/v1/track/:id", (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     return res.json({
         data: getTrack(id, id, "")
     })

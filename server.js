@@ -97,9 +97,9 @@ client.on('messageCreate', async (message) => {
             let getAlbumOverride = await GET_USER_COVER([user.discord_id, new_v, albumIdentifier, lastPlayed.albumName + lastPlayed.artistName]);
             let imageOverride = (!getAlbumOverride || getAlbumOverride?.length == 0) ? lastPlayed.defaultCover : getAlbumOverride.custom_cover_url;
 
-            let streamData = await getTrack([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()]);
-            console.log([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()])
-            console.log(streamData)
+            let streamData = await getTrack([lastPlayed.trackId || null, null, lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()]);
+            //console.log([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()])
+
             let fullData = null;
             if (streamData.length > 0) {
                 fullData = streamData[0];

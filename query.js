@@ -128,14 +128,16 @@ export const getPlaylist = async (val) => {
 
 export const getTrack = async (vals) => {
     const { rows } = await client.query(`
-    SELECT
-        date,
-        streams,
-        streams - LAG(streams, 1) OVER(PARTITION BY ss.id ORDER BY ss.date ASC) as daily
-    FROM stream_snapshots ss
-    JOIN tracks t ON t.last_fm_link = $1 OR t.id = $2 OR (LOWER(t.name) || LOWER(t.first_artist_name)) = $3
-    WHERE ss.id = t.id
-    ORDER BY date DESC`, vals);
+        SELECT
+            ss.date,
+            ss.streams,
+            ss.streams - LAG(ss.streams, 1) OVER(PARTITION BY ss.id ORDER BY ss.date ASC) as daily
+        FROM stream_snapshots ss
+        JOIN tracks t ON ss.id = t.id
+        WHERE t.last_fm_link = $1 
+           OR t.id = $2 
+           OR CONCAT(LOWER(t.name), ' ', LOWER(t.first_artist_name)) = $3
+        ORDER BY ss.date DESC`, vals);
     return rows;
 }
 

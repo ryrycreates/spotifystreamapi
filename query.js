@@ -133,8 +133,9 @@ export const getTrack = async (vals) => {
             ss.streams,
             ss.streams - LAG(ss.streams, 1) OVER(PARTITION BY ss.id ORDER BY ss.date ASC) as daily
         FROM stream_snapshots ss
-        JOIN tracks t
-        WHERE t.last_fm_link = $1 
+        JOIN tracks t on t.id = ss.id
+        WHERE 
+            t.last_fm_link = $1 
            OR ss.id = $2 
            OR CONCAT(LOWER(t.name), ' ', LOWER(t.first_artist_name)) = $3
         ORDER BY ss.date DESC`, vals);

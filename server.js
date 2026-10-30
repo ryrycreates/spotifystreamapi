@@ -97,8 +97,8 @@ client.on('messageCreate', async (message) => {
             let getAlbumOverride = await GET_USER_COVER([user.discord_id, new_v, albumIdentifier, lastPlayed.albumName + lastPlayed.artistName]);
             let imageOverride = (!getAlbumOverride || getAlbumOverride?.length == 0) ? lastPlayed.defaultCover : getAlbumOverride.custom_cover_url;
 
-            let streamData = await getTrack([lastPlayed.trackId || null, null, lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()]);
-            //console.log([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()])
+            let streamData = await getTrack([lastPlayed.trackId || null, null, lastPlayed.trackName?.toLocaleLowerCase() + " " + lastPlayed.artistName?.toLocaleLowerCase()]);
+            console.log([lastPlayed.trackId || "", "", lastPlayed.trackName?.toLocaleLowerCase() + lastPlayed.artistName?.toLocaleLowerCase()])
 
             let fullData = null;
             if (streamData.length > 0) {
@@ -213,7 +213,7 @@ app.get("/api/v1/playlist/:id", (req, res) => {
 app.get("/api/v1/track/:id", (req, res) => {
     const { id } = req.params;
     return res.json({
-        data: getTrack([id, id, ""])
+        data: getTrack([id, id, null])
     })
 });
 
